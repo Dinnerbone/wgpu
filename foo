@@ -1,0 +1,31 @@
+diff --git a/wgpu/examples/hello-triangle/main.rs b/wgpu/examples/hello-triangle/main.rs
+index 16a96129..9893308c 100644
+--- a/wgpu/examples/hello-triangle/main.rs
++++ b/wgpu/examples/hello-triangle/main.rs
+@@ -164,6 +164,26 @@ async fn run(event_loop: EventLoop<()>, window: Window) {
+                     rpass.draw(0..3, 0..1);
+                 }
+                 queue.submit(Some(encoder.finish()));
++                let mut encoder =
++                    device.create_command_encoder(&wgpu::CommandEncoderDescriptor { label: None });
++                {
++                    let mut rpass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
++                        label: None,
++                        color_attachments: &[Some(wgpu::RenderPassColorAttachment {
++                            view: &view,
++                            resolve_target: None,
++                            ops: wgpu::Operations {
++                                load: wgpu::LoadOp::Clear(wgpu::Color::GREEN),
++                                store: true,
++                            },
++                        })],
++                        depth_stencil_attachment: None,
++                    });
++                    rpass.set_pipeline(&render_pipeline);
++                    rpass.set_bind_group(0, &bind_group, &[]);
++                    rpass.draw(0..3, 0..1);
++                }
++                queue.submit(Some(encoder.finish()));
+                 frame.present();
+                 log::info!("Presented");
+             }

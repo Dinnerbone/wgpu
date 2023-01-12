@@ -12,6 +12,7 @@ use wgpu::{
     ComputePipelineDescriptor, Maintain, MapMode, PipelineLayoutDescriptor, PushConstantRange,
     ShaderModuleDescriptor, ShaderSource, ShaderStages,
 };
+use wgt::Backend;
 
 use crate::common::TestingContext;
 
@@ -330,7 +331,11 @@ fn shader_input_output_test(
         cpass.set_bind_group(0, &bg, &[]);
 
         if let InputStorageType::PushConstant = storage_type {
-            cpass.set_push_constants(0, bytemuck::cast_slice(&test.input_values))
+            if ctx.adapter_info.backend == Backend::Gl {
+                eprintln!("{test_name}: {processed}");
+            }
+            cpass.set_push_constants(0, bytemuck::cast_slice(&test.input_values));
+            eprintln!("Worked?");
         }
 
         cpass.dispatch_workgroups(1, 1, 1);
