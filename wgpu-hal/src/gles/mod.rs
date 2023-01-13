@@ -84,6 +84,8 @@ use arrayvec::ArrayVec;
 
 use glow::HasContext;
 
+use naga::{FastHashMap, ShaderStage};
+use parking_lot::Mutex;
 use std::{fmt, ops::Range, sync::Arc};
 
 #[derive(Clone)]
@@ -190,6 +192,8 @@ struct TextureFormatDesc {
     data_type: u32,
 }
 
+type ShaderCache = FastHashMap<(ShaderStage, String), Result<glow::Shader, crate::PipelineError>>;
+
 struct AdapterShared {
     context: AdapterContext,
     private_caps: PrivateCapabilities,
@@ -197,6 +201,7 @@ struct AdapterShared {
     workarounds: Workarounds,
     shading_language_version: naga::back::glsl::Version,
     max_texture_size: u32,
+    shader_cache: Mutex<ShaderCache>,
 }
 
 pub struct Adapter {

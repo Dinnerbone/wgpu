@@ -578,6 +578,7 @@ impl super::Adapter {
                     features,
                     shading_language_version,
                     max_texture_size,
+                    shader_cache: Default::default(),
                 }),
             },
             info: Self::make_info(vendor, renderer),

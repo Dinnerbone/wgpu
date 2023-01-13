@@ -9,6 +9,7 @@ use std::{
 
 #[cfg(not(target_arch = "wasm32"))]
 use std::mem;
+use std::ops::DerefMut;
 
 type ShaderStage<'a> = (
     naga::ShaderStage,
@@ -156,6 +157,27 @@ impl super::Device {
         }
     }
 
+    /// Caches the compilation of a shader.
+    /// The handle should not be deleted manually and will be deleted when the queue is submitted.
+    fn get_or_compile_shader(
+        cache: &mut super::ShaderCache,
+        gl: &glow::Context,
+        shader: String,
+        naga_stage: naga::ShaderStage,
+        #[cfg_attr(target_arch = "wasm32", allow(unused))] label: Option<&str>,
+    ) -> Result<glow::Shader, crate::PipelineError> {
+        // False positive...
+        #[allow(clippy::pattern_type_mismatch)]
+        cache
+            .entry((naga_stage, shader))
+            .or_insert_with_key(|(_, shader)| unsafe {
+                Self::compile_shader(gl, shader, naga_stage, label)
+            })
+            .clone()
+    }
+
+    /// Compiles a shader, but does not cache it.
+    /// It's the callers responsibility to delete the shader after use.
     unsafe fn compile_shader(
         gl: &glow::Context,
         shader: &str,
@@ -202,6 +224,7 @@ impl super::Device {
         naga_stage: naga::ShaderStage,
         stage: &crate::ProgrammableStage<super::Api>,
         context: CompilationContext,
+        cache: &mut super::ShaderCache,
     ) -> Result<glow::Shader, crate::PipelineError> {
         use naga::back::glsl;
         let pipeline_options = glsl::PipelineOptions {
@@ -262,7 +285,7 @@ impl super::Device {
             reflection_info,
         );
 
-        unsafe { Self::compile_shader(gl, &output, naga_stage, stage.module.label.as_deref()) }
+        Self::get_or_compile_shader(cache, gl, output, naga_stage, stage.module.label.as_deref())
     }
 
     unsafe fn create_pipeline<'a, I: Iterator<Item = ShaderStage<'a>>>(
@@ -285,7 +308,7 @@ impl super::Device {
         let mut name_binding_map = NameBindingMap::default();
         let mut sampler_map = [None; super::MAX_TEXTURE_SLOTS];
         let mut has_stages = wgt::ShaderStages::empty();
-        let mut shaders_to_delete = arrayvec::ArrayVec::<_, 3>::new();
+        let mut shaders_to_attach = arrayvec::ArrayVec::<_, 3>::new();
 
         for (naga_stage, stage) in shaders {
             has_stages |= map_naga_stage(naga_stage);
@@ -296,8 +319,14 @@ impl super::Device {
                 multiview,
             };
 
-            let shader = Self::create_shader(gl, naga_stage, stage, context)?;
-            shaders_to_delete.push(shader);
+            let shader = Self::create_shader(
+                gl,
+                naga_stage,
+                stage,
+                context,
+                self.shared.shader_cache.lock().deref_mut(),
+            )?;
+            shaders_to_attach.push(shader);
         }
 
         // Create empty fragment shader if only vertex shader is present
@@ -308,25 +337,20 @@ impl super::Device {
             };
             let shader_src = format!("#version {} es \n void main(void) {{}}", version,);
             log::info!("Only vertex shader is present. Creating an empty fragment shader",);
-            let shader = unsafe {
-                Self::compile_shader(
-                    gl,
-                    &shader_src,
-                    naga::ShaderStage::Fragment,
-                    Some("(wgpu internal) dummy fragment shader"),
-                )
-            }?;
-            shaders_to_delete.push(shader);
+            let shader = Self::get_or_compile_shader(
+                self.shared.shader_cache.lock().deref_mut(),
+                gl,
+                shader_src,
+                naga::ShaderStage::Fragment,
+                Some("(wgpu internal) dummy fragment shader"),
+            )?;
+            shaders_to_attach.push(shader);
         }
 
-        for &shader in shaders_to_delete.iter() {
+        for &shader in shaders_to_attach.iter() {
             unsafe { gl.attach_shader(program, shader) };
         }
         unsafe { gl.link_program(program) };
-
-        for shader in shaders_to_delete {
-            unsafe { gl.delete_shader(shader) };
-        }
 
         log::info!("\tLinked program {:?}", program);
 

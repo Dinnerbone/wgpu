@@ -1369,6 +1369,14 @@ impl crate::Queue<super::Api> for super::Queue {
             fence.pending.push((value, sync));
         }
 
+        for (_, entry) in self.shared.shader_cache.lock().drain() {
+            if let Ok(shader) = entry {
+                unsafe {
+                    gl.delete_shader(shader);
+                }
+            }
+        }
+
         Ok(())
     }
 
