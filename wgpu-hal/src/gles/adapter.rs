@@ -632,7 +632,13 @@ impl super::Adapter {
             features.set(wgt::Features::INDIRECT_FIRST_INSTANCE, supported);
         }
 
-        let max_texture_size = unsafe { gl.get_parameter_i32(glow::MAX_TEXTURE_SIZE) } as u32;
+        let max_texture_size = if web_gl {
+            // Chromium on Android deliberately lies about the limit, but in reality it's much higher.
+            // Assume a safe 8k minimum on webgl and let the caller handle the allocation errors if it turns out to be too big.
+            unsafe { gl.get_parameter_i32(glow::MAX_TEXTURE_SIZE) }.max(8192) as u32
+        } else {
+            (unsafe { gl.get_parameter_i32(glow::MAX_TEXTURE_SIZE) } as u32)
+        };
         let max_texture_3d_size = unsafe { gl.get_parameter_i32(glow::MAX_3D_TEXTURE_SIZE) } as u32;
 
         let min_uniform_buffer_offset_alignment =
