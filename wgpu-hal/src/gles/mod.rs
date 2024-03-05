@@ -668,6 +668,10 @@ impl Fence {
             let status = unsafe { gl.get_sync_status(sync) };
             if status == glow::SIGNALED {
                 max_value = value;
+            } else {
+                // The syncs are signalled in order; once we've hit something not signalled,
+                // then there's no more signalled left to check.
+                break;
             }
         }
         max_value
