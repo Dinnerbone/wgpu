@@ -29,7 +29,7 @@ targets = [
 
 [features]
 default = ["std"]
-std = []
+std = ["js-sys/std"]
 strict_asserts = []
 fragile-send-sync-non-atomic-wasm = []
 serde = ["dep:serde"]
@@ -44,7 +44,7 @@ bitflags = { workspace = true, features = ["serde"] }
 serde = { workspace = true, features = ["derive"], optional = true }
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
-js-sys.workspace = true
+js-sys = { workspace = true }
 web-sys = { workspace = true, features = [
     "ImageBitmap",
     "ImageData",

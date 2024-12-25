@@ -226,6 +226,6 @@ web-sys = { workspace = true, features = [
     "EventTarget",
 ] }
 wasm-bindgen.workspace = true
-js-sys.workspace = true
+js-sys = { workspace = true, features = ["std"] }
 wasm-bindgen-futures.workspace = true
 parking_lot.workspace = true

@@ -61,7 +61,7 @@ web-sys = { workspace = true }
 
 [target.'cfg(target_arch = "wasm32")'.dev-dependencies]
 image.workspace = true
-js-sys.workspace = true
+js-sys = { workspace = true, features = ["std"] }
 wasm-bindgen-futures.workspace = true
 wasm-bindgen-test.workspace = true
 wasm-bindgen.workspace = true

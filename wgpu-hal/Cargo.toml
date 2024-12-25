@@ -186,7 +186,7 @@ web-sys = { workspace = true, features = [
     "WebGl2RenderingContext",
     "OffscreenCanvas",
 ] }
-js-sys.workspace = true
+js-sys = { workspace = true, features = ["std"] }
 
 [target.'cfg(unix)'.dependencies]
 libc.workspace = true

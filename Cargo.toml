@@ -171,7 +171,7 @@ windows = { version = "0.58", default-features = false }
 # wasm32 dependencies
 console_error_panic_hook = "0.1.7"
 console_log = "1"
-js-sys = "0.3.70"
+js-sys = { version = "0.3.70", default-features = false }
 wasm-bindgen = "0.2.97"
 wasm-bindgen-futures = "0.4.45"
 wasm-bindgen-test = "0.3"
