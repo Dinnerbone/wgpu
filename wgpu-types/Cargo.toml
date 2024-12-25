@@ -28,6 +28,8 @@ targets = [
 [lib]
 
 [features]
+default = ["std"]
+std = []
 strict_asserts = []
 fragile-send-sync-non-atomic-wasm = []
 serde = ["dep:serde"]
