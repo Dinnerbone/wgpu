@@ -29,7 +29,7 @@ targets = [
 
 [features]
 default = ["std"]
-std = ["js-sys/std"]
+std = ["js-sys/std", "web-sys/std"]
 strict_asserts = []
 fragile-send-sync-non-atomic-wasm = []
 serde = ["dep:serde"]

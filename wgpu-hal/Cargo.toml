@@ -181,6 +181,7 @@ core-graphics-types.workspace = true
 [target.'cfg(all(target_arch = "wasm32", not(target_os = "emscripten")))'.dependencies]
 wasm-bindgen.workspace = true
 web-sys = { workspace = true, features = [
+    "std",
     "Window",
     "HtmlCanvasElement",
     "WebGl2RenderingContext",
